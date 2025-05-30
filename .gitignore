@@ -1,0 +1,4 @@
+/prochiye
+/dataset
+*.pt
+.env
