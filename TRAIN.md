@@ -135,13 +135,13 @@ python -m src.wise_ft \
     --train-dataset=YourCustomDataset \
     --epochs=10 \
     --lr=0.00003 \
-    --batch-size=64 \
+    --batch-size=256 \
     --model=ViT-B/32 \
     --eval-datasets=YourCustomDataset \
     --template=your_custom_template \
     --results-db=results.jsonl \
     --save=models/wiseft/your_model \
-    --data-location=./path/to/your/dataset \
+    --data-location=./dataset \
     --alpha 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
 ```
 

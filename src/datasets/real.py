@@ -3,34 +3,19 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 
-# Define your class names
+# Updated class names to match your actual folder structure
 classnames = [
-    "a photo of fresh fruits on a market stall",
-    "a photo of citrus and tropical fruits on a market stall",
-    "a photo of dried fruits on a market stall",
-    "a photo of vegetables like potatoes and onions on a market stall",
-    "a photo of tomatoes and cucumbers sold in winter on a market stall",
-    "a photo of rice and sunflower seeds on a market stall",
-    "a photo of legumes like mung beans on a market stall",
-    "a photo of dairy products like milk on a market stall",
-    "a photo of pickled foods on a market stall",
-    "a photo of spices and medicinal herbs on a market stall",
-    "a photo of fresh herbs on a market stall",
-    "a photo of eggs on a market stall",
-    "a photo of flowers and seedlings on a market stall",
-    "a photo of bread on a market stall",
-    "a photo of homemade preserved foods on a market stall",
-    "a photo of industrial packaged food products on a market stall",
-    "a photo of plastic and paper bags on a market stall",
-    "a photo of brooms on a market stall",
-    # "a photo of live fish on a market stall",
-    "a photo of meat products on a market stall",
-    # "a photo of poultry meat and offal on a market stall",
-    # "a photo of products sold from light vehicles at a market",
-    # "a photo of products sold from cargo trucks at a market",
-    "a photo of products sold on the ground at a market",
-    "a photo of a closed or inactive market stall"
-] # Replace with your actual class names
+    "a photo of fresh fruit",
+    "a photo of dried fruit",
+    "a photo of vegetables like potatoes and onion",
+    "a photo of rice and sunflower seed",
+    "a photo of spices and medicinal herb",
+    "a photo of egg",
+    "a photo of flowers and seedling",
+    "a photo of bread",
+    "a photo of plastic and paper bag",
+    "a photo of closed market stall"
+]
 
 # Create label dictionary
 label_dict = {name: i for i, name in enumerate(classnames)}
@@ -45,15 +30,28 @@ class CustomImageDataset(Dataset):
         self.image_paths = []
         self.labels = []
 
+        print(f"Looking for classes in: {folder_path}")
+
         # Loop through class folders
         for label_name in classnames:
             label_path = os.path.join(self.folder_path, label_name)
+            print(f"Checking folder: {label_path}")
+
             if os.path.exists(label_path):
-                for filename in os.listdir(label_path):
-                    if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-                        image_path = os.path.join(label_path, filename)
-                        self.image_paths.append(image_path)
-                        self.labels.append(label_dict[label_name])
+                image_files = [f for f in os.listdir(label_path)
+                               if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff'))]
+                print(f"Found {len(image_files)} images in {label_name}")
+
+                for filename in image_files:
+                    image_path = os.path.join(label_path, filename)
+                    self.image_paths.append(image_path)
+                    self.labels.append(label_dict[label_name])
+            else:
+                print(f"Warning: Folder does not exist: {label_path}")
+
+        print(f"Total images loaded: {len(self.image_paths)}")
+        if len(self.labels) > 0:
+            print(f"Label range: {min(self.labels)} to {max(self.labels)}")
 
     def __len__(self):
         return len(self.image_paths)
@@ -78,12 +76,26 @@ class YourCustomDataset:
                  num_workers=16,
                  classnames=None):
 
+        print(f"Initializing dataset from location: {location}")
+
+        # CRITICAL: Always use our custom classnames, never the passed ones
+        # This ensures consistency between zero-shot and fine-tuning phases
+        self.classnames = globals()['classnames']
+        print(f"Using {len(self.classnames)} classes: {self.classnames}")
+
         # Training dataset
+        train_path = os.path.join(location, 'train')
+        print(f"Train path: {train_path}")
+
         self.train_dataset = CustomImageDataset(
-            folder_path=os.path.join(location, 'train'),
+            folder_path=train_path,
             transform=preprocess
         )
-        self.train_dataloader = DataLoader(
+
+        if len(self.train_dataset) == 0:
+            raise ValueError(f"No training images found in {train_path}. Please check your dataset structure.")
+
+        self.train_loader = DataLoader(
             self.train_dataset,
             batch_size=batch_size,
             shuffle=True,
@@ -101,23 +113,19 @@ class YourCustomDataset:
             # Use train data for testing if no separate test set
             self.test_dataset = self.train_dataset
 
-        self.test_dataloader = DataLoader(
+        self.test_loader = DataLoader(
             self.test_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers
         )
 
-        self.classnames = classnames if classnames else globals()['classnames']
 
-
-# Text templates for your domain (customize these for your specific classes)
+# Text templates for your domain - CRITICAL: These must match your classnames exactly
 your_custom_template = [
-    lambda c: f"a photo of a {c}.",
-    lambda c: f"this is a {c}.",
-    lambda c: f"a {c} image.",
+    lambda c: f"{c}.",  # Direct use since your classnames are already full descriptions
+    lambda c: f"this is {c}.",
     lambda c: f"an image of {c}.",
-    lambda c: f"the {c} is shown.",
-    lambda c: f"a picture of {c}.",
-    lambda c: f"{c} photo.",
+    lambda c: f"a picture showing {c}.",
+    lambda c: f"a photograph of {c}.",
 ]

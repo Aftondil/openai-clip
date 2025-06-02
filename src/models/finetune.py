@@ -115,6 +115,7 @@ def finetune(args):
         # Evaluate
         args.current_epoch = epoch
         eval_results = evaluate(image_classifier, args)
+        print()
 
     if args.save is not None:
         return model_path

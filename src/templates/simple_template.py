@@ -16,3 +16,11 @@ fashion_template = [
     lambda c: f"handwoven {c}.",
     lambda c: f"ethnic {c}.",
 ]
+
+your_custom_template = [
+    lambda c: f"{c}.",  # Direct use since your classnames are already full descriptions
+    lambda c: f"this is {c}.",
+    lambda c: f"an image of {c}.",
+    lambda c: f"a picture showing {c}.",
+    lambda c: f"a photograph of {c}.",
+]
